@@ -6,6 +6,8 @@ from sklearn.metrics import classification_report, confusion_matrix, f1_score
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+from utils.preprocess import classificar_nivel
+from utils.preprocess import carregar_dados, aplicar_encoders
 
 # IMPORTAÇÕES
 # Pandas - manipulação de dados
@@ -21,51 +23,16 @@ from tensorflow.keras import layers
 
 
 #carregando o dataset
-df = pd.read_csv("data/student-mat-limpo.csv")
-
-#Se a nota final for menor que 10, o aluno está em risco (1), caso contrario, (0). O operador < retorna True/False e o astype(int) converte 1/0
-df["risco"] = (df["nota_final"] < 10).astype(int)
-
-
+df = carregar_dados()
+df, encoders = aplicar_encoders(df)
 
 #Mostra quantos alunos estão dentro do baixo e alto risco
 print(f"\nDistribuição do risco:")
 print(f"  Baixo risco (nota >= 10): {(df['risco'] == 0).sum()} alunos")
 print(f"  Alto risco  (nota <  10): {(df['risco'] == 1).sum()} alunos")
 
-#As colunas selecionadas contem apenas yes/no são transformadas diretamente em 1 e 0 (Variaveis binarias)
-colunas_binarias = [
-    "apoio_escola", "apoio_familia", "aulas_pagas",
-    "atividades_extracurriculares", "frequentou_creche",
-    "deseja_ensino_superior", "acesso_internet", "relacionamento_romantico",
-]
-
-#para cada coluna substitui o yes=1 e outro valor por 0
-for col in colunas_binarias:
-    df[col] = (df[col] == "yes").astype(int)
-
-
-#Codifica colunas estrategicas com LabelEncoder
-#Colunas com texto que representam categorias sao convertidas para numeros inteiros pelo LabelEncoder
-#Guarda essas informações em um dicionario
-
-colunas_categoricas = [
-    "escola", "sexo", "tipo_residencia", "tamanho_familia",
-    "situacao_pais", "trabalho_mae", "trabalho_pai",
-    "motivo_escola", "responsavel",
-]
-encoders = {}  # dicionário que guarda um encoder por coluna
-for col in colunas_categoricas:
-    le = LabelEncoder()
-    # fit_transform aprende os valores únicos e já transforma a coluna
-    df[col] = le.fit_transform(df[col].astype(str))
-    encoders[col] = le  # salva o encoder para usar depois na previsão
-
-
 #Define as variaveis de entrada do modelo
 #Exclui-se nota_final pois ela é a variavel alvo e o modelo poderia "trapacear"
-
-
 features = [
     "escola", "sexo", "idade", "tipo_residencia", "tamanho_familia",
     "situacao_pais", "educacao_mae", "educacao_pai", "trabalho_mae",
@@ -155,21 +122,9 @@ historico = modelo.fit(
 
 y_prob = modelo.predict(X_test).flatten()
 
-#aplica o threshold de 0.2 para converter probabilidades em classes (0 ou 1)
-y_pred = (y_prob >= 0.2).astype(int)
-
-#usa o classification_report para exibir as metricas de desempenho como:
-#precision: quantidade de "risco"
-#recall: quantos o modelo de fato encontrou dentro do "risco"
-#f1-score: media entre precision e recall
-#support: total de alunos nessa classe no conjunto de teste
-print("\n" + "=" * 50)
-print("RESULTADOS DENTRO DO CONJUNTO DE TESTE")
-print("=" * 50)
-print(classification_report(y_test, y_pred, target_names=["Baixo Risco", "Alto Risco"]))
-print("Matriz de Confusão:")
-print(confusion_matrix(y_test, y_pred))
-
+#aplica o threshold de 0.4 para converter probabilidades em classes (0 ou 1)
+TRESHOLD = 0.4
+y_pred = (y_prob >= TRESHOLD).astype(int)
 
 #reutiliza o mesmo dataset separado acima
 X_todos = df[features].values
@@ -197,67 +152,57 @@ resultados = pd.DataFrame({
     "tempo_estudo": df["tempo_estudo"].values,
     "consumo_alcool_fds": df["consumo_alcool_fds"].values,
     "apoio_familia": df["apoio_familia"].values,
-    "sexo": df["sexo"].map({
-        0: "F",
-        1: "M"
-    }),
+    "sexo": encoders["sexo"].inverse_transform(df["sexo"]),
     "idade": df["idade"],
 
     "prob_risco_%": (probabilidades * 100).round(1),
-    "risco_previsto": (probabilidades >= 0.4).astype(int),
+    "risco_previsto": (probabilidades >= TRESHOLD).astype(int),
     "risco_real": df["risco"].values,
     "reprovação": df["reprovacoes_anteriores"].values,
 })
 #classifica o nível de risco com base na probabilidade
-def classificar_nivel(prob):
-    if prob <= 20:
-        return "EXCELENTE - MANTER AUTONOMIA"
-    elif prob <= 40:
-        return "BOM - MONITORIZAÇÃO OCASIONAL"
-    elif prob <= 60:
-        return "REGULAR - APOIO EXTRA OU TUTORIA"
-    elif prob <= 80:
-        return "RUIM - PLANO DE RECUPERAÇÃO URGENTE"
-    elif prob <= 100:
-        return "CRITICO - INTERVENÇÃO PEDAGOGICA PROFUNDA"
-    else:
-        # Só vai cair aqui se a probabilidade for maior que 100 (ou houver algum erro nos dados)
-        return "ALTO"
 
 resultados["nivel_risco"] = resultados["prob_risco_%"].apply(classificar_nivel)
 
-#exibe um resumo geral
-print("\n" + "=" * 55)
-print("PREVISÃO DE RISCO")
-print("=" * 55)
-print(f"Total de alunos: {len(resultados)}")
-print(f"Em risco:  {resultados['risco_previsto'].sum()} alunos")
-print(f"Sem risco: {(resultados['risco_previsto'] == 0).sum()} alunos")
-
-print(f"\nDistribuição por nível:")
-print(resultados["nivel_risco"].value_counts().to_string())
-
-#exibe apenas os alunos identificados como alto risco
-print("\n" + "-" * 55)
-print("Alunos com alto risco")
-print("-" * 55)
-alto_risco = resultados[resultados["nivel_risco"] == "CRITICO - INTERVENÇÃO PEDAGOGICA PROFUNDA"].sort_values(
-    "prob_risco_%", ascending=False
+#salva as metricas
+from sklearn.metrics import classification_report
+report = classification_report(
+    y_test,
+    y_pred,
+    target_names=["Baixo Risco", "Alto Risco"],
+    output_dict=True
 )
-print(alto_risco[["aluno_id", "nota_periodo_1", "nota_periodo_2",
-                   "nota_final", "prob_risco_%","reprovação"]].to_string(index=False))
+df_report = pd.DataFrame(report).transpose()
+df_report.to_csv("data/metricas_modelo.csv")
+print("\nMetricas salvas em 'data/metricas_modelo.csv'")
+
+#salva a matriz de confusão
+cm = confusion_matrix(y_test, y_pred)
+df_cm = pd.DataFrame(
+    cm,
+    index=["Real Baixo", "Real Alto"],
+    columns=["Previsto Baixo", "Previsto Alto"]
+)
+df_cm.to_csv("data/matriz_confusao.csv")
+print("Matriz de confusão salva em 'data/matriz_confusao.csv'")
+
+#Salva o resumo
+resumo = pd.DataFrame({
+    "total_alunos": [len(resultados)],
+    "alunos_risco": [resultados["risco_previsto"].sum()],
+    "alunos_sem_risco": [(resultados["risco_previsto"] == 0).sum()]
+})
+
+resumo.to_csv("data/resumo_modelo.csv", index=False)
+print("Resumo salvo em 'data/resumo_modelo.csv'")
+
+# salvar scaler e encoders e o modelo
+import joblib
+joblib.dump(scaler, "model/scaler.pkl")
+joblib.dump(encoders, "model/encoders.pkl")
+modelo.save("model/modelo.h5")
+print("Modelo salvo em 'data/'")
 
 #salva o resultado completo em CSV para a prefeitura para melhor analise
 resultados.to_csv("data/previsoes_alunos.csv", index=False)
-print("\n Arquivo 'previsoes_alunos.csv' salvo")
-
-
-
-import joblib
-
-# salvar scaler e encoders
-joblib.dump(scaler, "model/scaler.pkl")
-joblib.dump(encoders, "model/encoders.pkl")
-
-# salvar modelo
-modelo.save("model/modelo.h5")
+print("Resultado salvo em 'previsoes_alunos.csv' salvo")
