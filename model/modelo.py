@@ -189,7 +189,7 @@ print("Resumo salvo em 'data/resumo_modelo.csv'")
 import joblib
 joblib.dump(scaler, "model/scaler.pkl")
 joblib.dump(encoders, "model/encoders.pkl")
-modelo.save("model/modelo.h5")
+modelo.save("model/modelo.keras")
 print("Modelo salvo em 'data/'")
 
 #salva o resultado completo em CSV para a prefeitura para melhor analise

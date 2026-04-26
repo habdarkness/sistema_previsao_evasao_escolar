@@ -35,7 +35,7 @@ def load_data(caminho="data/student-mat-limpo.csv"):
     return df
 
 
-def apply_encoders(
+def encode(
     df,
     colunas_categoricas=[
         "escola", "sexo", "tipo_residencia", "tamanho_familia",

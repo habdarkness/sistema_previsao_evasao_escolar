@@ -11,7 +11,7 @@ st.title("🔮 Previsão de Risco Escolar")
 # =========================
 # CARREGAR MODELO
 # =========================
-modelo = keras.models.load_model("model/modelo.h5")
+modelo = keras.models.load_model("model/modelo.keras")
 scaler = joblib.load("model/scaler.pkl")
 encoders = joblib.load("model/encoders.pkl")
 
