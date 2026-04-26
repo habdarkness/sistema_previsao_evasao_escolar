@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-from utils.preprocess import classificar_nivel
-from utils.preprocess import carregar_dados, aplicar_encoders
+from utils.preprocess import classificate, load_data, encode, get_features
 
 # IMPORTAÇÕES
 # Pandas - manipulação de dados
@@ -23,8 +22,8 @@ from utils.preprocess import carregar_dados, aplicar_encoders
 
 
 #carregando o dataset
-df = carregar_dados()
-df, encoders = aplicar_encoders(df)
+df = load_data()
+df, encoders = encode(df)
 
 #Mostra quantos alunos estão dentro do baixo e alto risco
 print(f"\nDistribuição do risco:")
@@ -33,17 +32,7 @@ print(f"  Alto risco  (nota <  10): {(df['risco'] == 1).sum()} alunos")
 
 #Define as variaveis de entrada do modelo
 #Exclui-se nota_final pois ela é a variavel alvo e o modelo poderia "trapacear"
-features = [
-    "escola", "sexo", "idade", "tipo_residencia", "tamanho_familia",
-    "situacao_pais", "educacao_mae", "educacao_pai", "trabalho_mae",
-    "trabalho_pai", "motivo_escola", "responsavel", "tempo_viagem",
-    "tempo_estudo", "reprovacoes_anteriores", "apoio_escola", "apoio_familia",
-    "aulas_pagas", "atividades_extracurriculares", "frequentou_creche",
-    "deseja_ensino_superior", "acesso_internet", "relacionamento_romantico",
-    "qualidade_relacoes_familiares", "tempo_livre", "sair_com_amigos",
-    "consumo_alcool_semana", "consumo_alcool_fds", "saude", "faltas",
-    "nota_periodo_1", "nota_periodo_2",
-]
+features = get_features()
 
 #Separa as features (X) da variável alvo (y)
 X = df[features].values  #entrada: cada linha é um aluno
@@ -162,7 +151,7 @@ resultados = pd.DataFrame({
 })
 #classifica o nível de risco com base na probabilidade
 
-resultados["nivel_risco"] = resultados["prob_risco_%"].apply(classificar_nivel)
+resultados["nivel_risco"] = resultados["prob_risco_%"].apply(classificate)
 
 #salva as metricas
 from sklearn.metrics import classification_report

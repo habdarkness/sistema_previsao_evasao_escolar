@@ -3,30 +3,19 @@ import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="Análises", layout="wide")
-
 st.title("📊 Dashboard de Análise de Risco Escolar")
 
 # =========================
 # ORDEM DOS NÍVEIS
 # =========================
-ordem_niveis = [
-    "CRITICO - INTERVENÇÃO PEDAGOGICA PROFUNDA",
-    "RUIM - PLANO DE RECUPERAÇÃO URGENTE",
-    "REGULAR - APOIO EXTRA OU TUTORIA",
-    "BOM - MONITORIZAÇÃO OCASIONAL",
-    "EXCELENTE - MANTER AUTONOMIA",
-]
-
-# =========================
-# CORES
-# =========================
-cores_risco = {
-    "EXCELENTE - MANTER AUTONOMIA": "#2ECC71",
-    "BOM - MONITORIZAÇÃO OCASIONAL": "#90EE90",
-    "REGULAR - APOIO EXTRA OU TUTORIA": "#9ACD32",
-    "RUIM - PLANO DE RECUPERAÇÃO URGENTE": "#F39C12",
+niveis = {
     "CRITICO - INTERVENÇÃO PEDAGOGICA PROFUNDA": "#E74C3C",
+    "RUIM - PLANO DE RECUPERAÇÃO URGENTE": "#F39C12",
+    "REGULAR - APOIO EXTRA OU TUTORIA": "#9ACD32",
+    "BOM - MONITORIZAÇÃO OCASIONAL": "#90EE90",
+    "EXCELENTE - MANTER AUTONOMIA": "#2ECC71",
 }
+niveis_keys = list(niveis.keys())
 
 # =========================
 # CARREGAR DADOS
@@ -35,7 +24,7 @@ df = pd.read_csv("data/previsoes_alunos.csv")
 
 df["nivel_risco"] = pd.Categorical(
     df["nivel_risco"],
-    categories=ordem_niveis,
+    categories=niveis_keys,
     ordered=True
 )
 
@@ -44,17 +33,9 @@ df["nivel_risco"] = pd.Categorical(
 # =========================
 st.sidebar.header("Filtros")
 
-nivel = st.sidebar.multiselect(
-    "Nível de risco",
-    ordem_niveis,
-    default=ordem_niveis
-)
+nivel = st.sidebar.multiselect("Nível de risco", niveis_keys, default=niveis_keys)
 
-gender = st.sidebar.multiselect(
-    "Gênero",
-    ["M", "F"],
-    default=["M", "F"]
-)
+genero = st.sidebar.multiselect("Gênero", ["M", "F"], default=["M", "F"])
 
 idade_min = st.sidebar.slider("Idade mínima", 15, 22, 15)
 idade_max = st.sidebar.slider("Idade máxima", 15, 22, 22)
@@ -62,13 +43,31 @@ idade_max = st.sidebar.slider("Idade máxima", 15, 22, 22)
 nota_min = st.sidebar.slider("Nota mínima", 0, 20, 0)
 nota_max = st.sidebar.slider("Nota máxima", 0, 20, 20)
 
+if "faltas" in df.columns:
+    faltas_min = int(df["faltas"].min())
+    faltas_max = int(df["faltas"].max())
+    faltas_range = st.sidebar.slider(
+        "Faixa de faltas",
+        faltas_min,
+        faltas_max,
+        (faltas_min, faltas_max)
+    )
+    faltas_min_sel, faltas_max_sel = faltas_range
+else:
+    faltas_min_sel, faltas_max_sel = 0, 999
+
+# =========================
+# DATAFRAME FILTRADO
+# =========================
 df_filtrado = df[
     (df["nivel_risco"].isin(nivel)) &
     (df["nota_final"] >= nota_min) &
     (df["nota_final"] <= nota_max) &
     (df["idade"] >= idade_min) &
     (df["idade"] <= idade_max) &
-    (df["sexo"].isin(gender))
+    (df["sexo"].isin(genero)) &
+    (df["faltas"] >= faltas_min_sel) &
+    (df["faltas"] <= faltas_max_sel)
 ]
 
 # =========================
@@ -86,13 +85,12 @@ st.divider()
 # 1 - RISCO POR NÍVEL
 # =========================
 st.subheader("📊 Distribuição por nível de risco")
-
-st.markdown("Quantidade de alunos em cada nível de risco.")
+st.markdown("**Objetivo:** Apresentar a quantidade de alunos em cada categoria de risco escolar para visualizar o panorama geral da instituição.")
 
 contagem = (
     df_filtrado["nivel_risco"]
     .value_counts()
-    .reindex(ordem_niveis)
+    .reindex(niveis_keys)
     .reset_index()
 )
 
@@ -103,12 +101,8 @@ fig1 = px.bar(
     x="nivel_risco",
     y="quantidade",
     color="nivel_risco",
-    labels={
-        "nivel_risco": "Nível de risco",
-        "quantidade": "Número de alunos"
-    },
-    category_orders={"nivel_risco": ordem_niveis},
-    color_discrete_map=cores_risco
+    category_orders={"nivel_risco": niveis_keys},
+    color_discrete_map=niveis
 )
 
 st.plotly_chart(fig1, use_container_width=True)
@@ -117,15 +111,13 @@ st.plotly_chart(fig1, use_container_width=True)
 # 2 - FALTAS
 # =========================
 if "faltas" in df.columns:
-
     st.subheader("📊 Média de faltas por risco")
-
-    st.markdown("Mostra a média de faltas por nível de risco.")
+    st.markdown("**Objetivo:** Mostrar a relação entre frequência escolar e nível de risco, identificando se faltas elevadas estão associadas a maior vulnerabilidade.")
 
     faltas = (
         df_filtrado.groupby("nivel_risco")["faltas"]
         .mean()
-        .reindex(ordem_niveis)
+        .reindex(niveis_keys)
         .reset_index()
     )
 
@@ -133,13 +125,9 @@ if "faltas" in df.columns:
         faltas,
         x="nivel_risco",
         y="faltas",
-        labels={
-            "nivel_risco": "Nível de risco",
-            "faltas": "Média de faltas"
-        },
         color="nivel_risco",
-        category_orders={"nivel_risco": ordem_niveis},
-        color_discrete_map=cores_risco
+        category_orders={"nivel_risco": niveis_keys},
+        color_discrete_map=niveis
     )
 
     st.plotly_chart(fig2, use_container_width=True)
@@ -148,13 +136,13 @@ if "faltas" in df.columns:
 # 3 - ÁLCOOL
 # =========================
 if "consumo_alcool_fds" in df.columns:
-
     st.subheader("📊 Consumo de álcool por risco")
+    st.markdown("**Objetivo:** Avaliar possíveis impactos de hábitos externos, como consumo de álcool, sobre o desempenho e risco escolar.")
 
     alcool = (
         df_filtrado.groupby("nivel_risco")["consumo_alcool_fds"]
         .mean()
-        .reindex(ordem_niveis)
+        .reindex(niveis_keys)
         .reset_index()
     )
 
@@ -162,13 +150,9 @@ if "consumo_alcool_fds" in df.columns:
         alcool,
         x="nivel_risco",
         y="consumo_alcool_fds",
-        labels={
-            "nivel_risco": "Nível de risco",
-            "consumo_alcool_fds": "Consumo médio"
-        },
         color="nivel_risco",
-        category_orders={"nivel_risco": ordem_niveis},
-        color_discrete_map=cores_risco
+        category_orders={"nivel_risco": niveis_keys},
+        color_discrete_map=niveis
     )
 
     st.plotly_chart(fig3, use_container_width=True)
@@ -177,8 +161,8 @@ if "consumo_alcool_fds" in df.columns:
 # 4 - APOIO FAMILIAR
 # =========================
 if "apoio_familia" in df.columns:
-
     st.subheader("📊 Apoio familiar por risco")
+    st.markdown("**Objetivo:** Analisar a influência do suporte familiar na distribuição dos níveis de risco dos alunos.")
 
     apoio = (
         df_filtrado.groupby(["nivel_risco", "apoio_familia"])
@@ -197,12 +181,7 @@ if "apoio_familia" in df.columns:
         y="quantidade",
         color="apoio_familia",
         barmode="group",
-        labels={
-            "nivel_risco": "Nível de risco",
-            "quantidade": "Alunos",
-            "apoio_familia": "Apoio familiar"
-        },
-        category_orders={"nivel_risco": ordem_niveis}
+        category_orders={"nivel_risco": niveis_keys}
     )
 
     st.plotly_chart(fig4, use_container_width=True)
@@ -211,31 +190,22 @@ if "apoio_familia" in df.columns:
 # 5 - NOTAS
 # =========================
 st.subheader("📊 Distribuição das notas")
-
-notas = df_filtrado.melt(
-    id_vars="nivel_risco",
-    value_vars=["nota_final"],
-    var_name="tipo",
-    value_name="nota"
-)
+st.markdown("**Objetivo:** Comparar o desempenho acadêmico entre diferentes grupos de risco por meio da variação das notas finais.")
 
 fig5 = px.box(
-    notas,
+    df_filtrado,
     x="nivel_risco",
-    y="nota",
-    labels={
-        "nivel_risco": "Nível de risco",
-        "nota": "Nota final"
-    },
-    category_orders={"nivel_risco": ordem_niveis}
+    y="nota_final",
+    category_orders={"nivel_risco": niveis_keys}
 )
 
 st.plotly_chart(fig5, use_container_width=True)
 
 # =========================
-# 6 - GÊNERO POR RISCO
+# 6 - GÊNERO
 # =========================
 st.subheader("📊 Risco por gênero")
+st.markdown("**Objetivo:** Identificar diferenças na distribuição de risco escolar entre gêneros para análise demográfica.")
 
 genero_risco = (
     df_filtrado.groupby(["nivel_risco", "sexo"])
@@ -249,26 +219,17 @@ fig6 = px.bar(
     y="quantidade",
     color="sexo",
     barmode="group",
-    labels={
-        "nivel_risco": "Nível de risco",
-        "quantidade": "Alunos",
-        "sexo": "Gênero"
-    },
-    category_orders={"nivel_risco": ordem_niveis},
-    color_discrete_map={
-        "M": "blue",
-        "F": "red"
-    }
+    category_orders={"nivel_risco": niveis_keys},
+    color_discrete_map={"M": "blue", "F": "red"}
 )
 
 st.plotly_chart(fig6, use_container_width=True)
 
 # =========================
-# 7 - IDADE E RISCO
+# 7 - IDADE
 # =========================
 st.subheader("📊 Risco médio por idade")
-
-st.markdown("Mostra a média de risco por idade dos alunos.")
+st.markdown("**Objetivo:** Detectar faixas etárias com maior propensão ao risco escolar para orientar estratégias preventivas.")
 
 taxa = (
     df_filtrado.groupby("idade")["prob_risco_%"]
@@ -279,11 +240,7 @@ taxa = (
 fig7 = px.bar(
     taxa,
     x="idade",
-    y="prob_risco_%",
-    labels={
-        "idade": "Idade do aluno",
-        "prob_risco_%": "Risco médio (%)"
-    }
+    y="prob_risco_%"
 )
 
 st.plotly_chart(fig7, use_container_width=True)

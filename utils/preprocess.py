@@ -1,7 +1,7 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 
-def classificar_nivel(prob):
+def classificate(prob):
     if prob <= 20:
         return "EXCELENTE - MANTER AUTONOMIA"
     elif prob <= 40:
@@ -16,7 +16,7 @@ def classificar_nivel(prob):
         return "ALTO"
 
 
-def carregar_dados(caminho="data/student-mat-limpo.csv"):
+def load_data(caminho="data/student-mat-limpo.csv"):
     df = pd.read_csv(caminho)
 
     # variável alvo
@@ -35,7 +35,7 @@ def carregar_dados(caminho="data/student-mat-limpo.csv"):
     return df
 
 
-def aplicar_encoders(
+def apply_encoders(
     df,
     colunas_categoricas=[
         "escola", "sexo", "tipo_residencia", "tamanho_familia",
@@ -51,3 +51,16 @@ def aplicar_encoders(
         encoders[col] = le
 
     return df, encoders
+
+def get_features():
+    return [
+        "escola", "sexo", "idade", "tipo_residencia", "tamanho_familia",
+        "situacao_pais", "educacao_mae", "educacao_pai", "trabalho_mae",
+        "trabalho_pai", "motivo_escola", "responsavel", "tempo_viagem",
+        "tempo_estudo", "reprovacoes_anteriores", "apoio_escola", "apoio_familia",
+        "aulas_pagas", "atividades_extracurriculares", "frequentou_creche",
+        "deseja_ensino_superior", "acesso_internet", "relacionamento_romantico",
+        "qualidade_relacoes_familiares", "tempo_livre", "sair_com_amigos",
+        "consumo_alcool_semana", "consumo_alcool_fds", "saude", "faltas",
+        "nota_periodo_1", "nota_periodo_2",
+    ]

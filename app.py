@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# =========================
-# CONFIG
-# =========================
 st.set_page_config(
     page_title="Sistema de Previsão Escolar",
     layout="wide"
@@ -14,14 +11,14 @@ st.set_page_config(
 # CACHE (PERFORMANCE)
 # =========================
 @st.cache_data
-def carregar_dados():
+def load_info():
     metricas = pd.read_csv("data/metricas_modelo.csv", index_col=0)
     conf = pd.read_csv("data/matriz_confusao.csv", index_col=0)
     resumo = pd.read_csv("data/resumo_modelo.csv")
     previsoes = pd.read_csv("data/previsoes_alunos.csv")
     return metricas, conf, resumo, previsoes
 
-df_metricas, df_conf, df_resumo, df = carregar_dados()
+df_metricas, df_conf, df_resumo, df = load_info()
 
 # =========================
 # TÍTULO
@@ -64,23 +61,49 @@ st.divider()
 # MÉTRICAS
 # =========================
 st.header("📊 Desempenho do Modelo")
-
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 acuracia = df_metricas.loc["accuracy", "precision"] * 100
 precisao_alto = df_metricas.loc["Alto Risco", "precision"] * 100
 recall_alto = df_metricas.loc["Alto Risco", "recall"] * 100
+f1_alto = df_metricas.loc["Alto Risco", "f1-score"] * 100
 
 col1.metric("Acurácia", f"{acuracia:.1f}%")
 col2.metric("Precisão (Alto risco)", f"{precisao_alto:.1f}%")
 col3.metric("Recall (Alto risco)", f"{recall_alto:.1f}%")
+col4.metric("F1-Score", f"{f1_alto:.1f}%")
 
 st.markdown("""
-👉 O modelo encontra praticamente todos os alunos em risco (**recall alto**),  
-mas com alguns falsos positivos.
+**Objetivo:** Exibir os principais indicadores de desempenho do modelo e detalhar a qualidade das previsões para cada classe de risco.
 """)
 
 st.divider()
+
+# =========================
+# TABELA COMPLETA DE MÉTRICAS
+# =========================
+st.subheader("📋 Tabela completa de métricas")
+
+tabela_metricas = df_metricas.copy()
+
+for coluna in ["precision", "recall", "f1-score"]:
+    if coluna in tabela_metricas.columns:
+        tabela_metricas[coluna] = (tabela_metricas[coluna] * 100).round(1)
+
+if "support" in tabela_metricas.columns:
+    tabela_metricas["support"] = tabela_metricas["support"].astype(int)
+
+tabela_metricas = tabela_metricas.rename(columns={
+    "precision": "Precisão (%)",
+    "recall": "Recall (%)",
+    "f1-score": "F1-Score (%)",
+    "support": "Quantidade"
+})
+
+st.dataframe(
+    tabela_metricas,
+    use_container_width=True
+)
 
 # =========================
 # MATRIZ DE CONFUSÃO
