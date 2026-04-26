@@ -18,6 +18,22 @@ niveis = {
 niveis_keys = list(niveis.keys())
 
 # =========================
+# LABELS
+# =========================
+
+labels_padrao = {
+    "nivel_risco": "Nível de Risco",
+    "quantidade": "Quantidade de Alunos",
+    "faltas": "Média de Faltas",
+    "nota_final": "Nota Final",
+    "sexo": "Gênero",
+    "idade": "Idade",
+    "prob_risco_%": "Risco Médio (%)",
+    "apoio_familia": "Apoio Familiar",
+    "consumo_alcool_fds": "Consumo Médio de Álcool (FDS)"
+}
+
+# =========================
 # CARREGAR DADOS
 # =========================
 df = pd.read_csv("data/previsoes_alunos.csv")
@@ -101,6 +117,7 @@ fig1 = px.bar(
     x="nivel_risco",
     y="quantidade",
     color="nivel_risco",
+    labels=labels_padrao,
     category_orders={"nivel_risco": niveis_keys},
     color_discrete_map=niveis
 )
@@ -126,6 +143,7 @@ if "faltas" in df.columns:
         x="nivel_risco",
         y="faltas",
         color="nivel_risco",
+        labels=labels_padrao,
         category_orders={"nivel_risco": niveis_keys},
         color_discrete_map=niveis
     )
@@ -151,6 +169,7 @@ if "consumo_alcool_fds" in df.columns:
         x="nivel_risco",
         y="consumo_alcool_fds",
         color="nivel_risco",
+        labels=labels_padrao,
         category_orders={"nivel_risco": niveis_keys},
         color_discrete_map=niveis
     )
@@ -180,6 +199,7 @@ if "apoio_familia" in df.columns:
         x="nivel_risco",
         y="quantidade",
         color="apoio_familia",
+        labels=labels_padrao,
         barmode="group",
         category_orders={"nivel_risco": niveis_keys}
     )
@@ -196,6 +216,7 @@ fig5 = px.box(
     df_filtrado,
     x="nivel_risco",
     y="nota_final",
+    labels=labels_padrao,
     category_orders={"nivel_risco": niveis_keys}
 )
 
@@ -218,6 +239,7 @@ fig6 = px.bar(
     x="nivel_risco",
     y="quantidade",
     color="sexo",
+    labels=labels_padrao,
     barmode="group",
     category_orders={"nivel_risco": niveis_keys},
     color_discrete_map={"M": "blue", "F": "red"}
@@ -240,7 +262,8 @@ taxa = (
 fig7 = px.bar(
     taxa,
     x="idade",
-    y="prob_risco_%"
+    y="prob_risco_%",
+    labels=labels_padrao,
 )
 
 st.plotly_chart(fig7, use_container_width=True)
