@@ -55,23 +55,34 @@ O modelo é uma **Rede Neural MLP (Multi-Layer Perceptron)** treinada com variá
 ## Estrutura do Projeto
 
 ```
-pbl_4/
+├── .devcontainer/
+│   └── devcontainer.json           # Configuração do Dev Container
+├── .vscode/
+│   └── settings.json               # Configurações do editor
+├── data/
+│   ├── analise_exploratoria.ipynb  # Notebook de análise exploratória
+│   ├── matriz_confusao.csv         # Resultado da matriz de confusão
+│   ├── metricas_modelo.csv         # Métricas de avaliação do modelo
+│   ├── previsoes_alunos.csv        # Previsões geradas pelo modelo
+│   ├── resumo_modelo.csv           # Resumo de desempenho do modelo
+│   ├── student-mat-limpo.csv       # Dados tratados (colunas em português)
+│   └── student-mat.csv             # Dados originais
+├── model/
+│   ├── encoders.pkl                # Encoders para variáveis categóricas
+│   ├── modelo.keras                # Rede neural treinada (Keras)
+│   ├── modelo.py                   # Script de treinamento do modelo
+│   └── scaler.pkl                  # Scaler para normalização
+├── pages/
+│   ├── 1_Analises.py               # Página de análises exploratórias
+│   └── 2_Previsao.py               # Página de previsão de risco
+├── utils/
+│   ├── __init__.py
+│   └── preprocess.py               # Funções de pré-processamento
+├── .gitignore
 ├── README.md
 ├── app.py                          # Ponto de entrada da aplicação
-├── analise_exploratoria.ipynb      # Análise exploratória
 ├── requirements.txt
-├── data/
-│   ├── student-mat.csv             # Dados originais
-│   └── student-mat-limpo.csv       # Dados com colunas em português
-├── models/
-│   ├── mlp_model.pkl
-│   ├── scaler.pkl
-│   └── encoders.pkl
-├── pages/
-│   ├── 01_dashboard.py
-│   ├── 02_analise_exploratoria.py
-│   └── 03_previsao.py
-└── graficos/                       # Gráficos gerados
+└── runtime.txt                     # Versão do Python para deploy
 ```
 
 ---
