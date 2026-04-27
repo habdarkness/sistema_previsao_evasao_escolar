@@ -78,33 +78,6 @@ st.markdown("""
 """)
 
 st.divider()
-
-# =========================
-# TABELA COMPLETA DE MÉTRICAS
-# =========================
-st.subheader("📋 Tabela completa de métricas")
-
-tabela_metricas = df_metricas.copy()
-
-for coluna in ["precision", "recall", "f1-score"]:
-    if coluna in tabela_metricas.columns:
-        tabela_metricas[coluna] = (tabela_metricas[coluna] * 100).round(1)
-
-if "support" in tabela_metricas.columns:
-    tabela_metricas["support"] = tabela_metricas["support"].astype(int)
-
-tabela_metricas = tabela_metricas.rename(columns={
-    "precision": "Precisão (%)",
-    "recall": "Recall (%)",
-    "f1-score": "F1-Score (%)",
-    "support": "Quantidade"
-})
-
-st.dataframe(
-    tabela_metricas,
-    use_container_width=True
-)
-
 # =========================
 # MATRIZ DE CONFUSÃO
 # =========================

@@ -6,7 +6,7 @@ from tensorflow import keras
 from utils.preprocess import load_data, classificate, encode, get_features
 
 st.set_page_config(page_title="Previsão de Risco", layout="centered")
-st.title("🔮 Previsão de Risco Escolar")
+st.title("🔮 Previsão de Risco")
 
 # =========================
 # CARREGAR MODELO
