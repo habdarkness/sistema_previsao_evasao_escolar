@@ -17,7 +17,7 @@ A solução foi desenvolvida como parte de um PBL do curso de Engenharia de Soft
 
 ## 📂 Estrutura do Projeto
 
-```
+```bash
 SISTEMA_PREVISAO_EVASAO/
 │── app.py                # Arquivo principal da aplicação Streamlit
 │── requirements.txt       # Dependências do projeto
@@ -38,6 +38,7 @@ SISTEMA_PREVISAO_EVASAO/
 │   └── 2_🔮_Previsao.py
 │── utils/                 # Funções auxiliares
 │   └── preprocess.py
+
 ```
 
 ---
