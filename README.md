@@ -1,100 +1,123 @@
-```markdown
 # 📊 Sistema Inteligente de Índice de Desempenho Escolar
 
-Este projeto é uma aplicação em **Streamlit** que utiliza **Inteligência Artificial** para prever o risco de baixo desempenho escolar de alunos, com base em dados históricos acadêmicos, sociais e comportamentais.  
-A solução foi desenvolvida como parte de um PBL do curso de Engenharia de Software da **UNDB**.
+> Aplicação inteligente para previsão de risco de baixo desempenho escolar, desenvolvida como parte de um PBL do curso de **Engenharia de Software da UNDB**.
+
+---
+
+## 📌 Sobre o Projeto
+
+Este sistema utiliza **Inteligência Artificial** para classificar o risco de baixo desempenho escolar de alunos com base em dados históricos acadêmicos, sociais e comportamentais. A interface foi construída com **Streamlit**, proporcionando uma experiência interativa e acessível para educadores e gestores escolares.
 
 ---
 
 ## 🚀 Funcionalidades
 
-- 📈 **Análises exploratórias**: gráficos interativos sobre notas, tempo de estudo, consumo de álcool, faltas etc.
-- 🔮 **Previsão de risco**: classificação binária (baixo risco / alto risco) usando rede neural MLP.
-- 🖥️ **Dashboard interativo**: filtros dinâmicos para explorar os dados.
-- 💾 **Modelos salvos**: carregamento de encoders, scaler e rede neural treinada.
+- 📈 **Análises Exploratórias** — Gráficos interativos sobre notas, tempo de estudo, consumo de álcool, faltas e outros indicadores relevantes.
+- 🔮 **Previsão de Risco** — Classificação binária (**baixo risco / alto risco**) utilizando uma rede neural MLP treinada.
+- 🖥️ **Dashboard Interativo** — Filtros dinâmicos para explorar e segmentar os dados por diferentes variáveis.
+- 💾 **Modelos Salvos** — Carregamento automático de encoders, scaler e rede neural previamente treinados.
 
 ---
 
 ## 📂 Estrutura do Projeto
 
-```bash
-SISTEMA_PREVISAO_EVASAO/
-│── app.py                # Arquivo principal da aplicação Streamlit
-│── requirements.txt       # Dependências do projeto
-│── README.md              # Documentação do projeto
-│── runtime.txt            # Configuração de ambiente
-│── data/                  # Bases de dados e análises
-│   ├── student-mat.csv
-│   ├── student-mat-limpo.csv
-│   ├── metricas_modelo.csv
-│   └── previsoes_alunos.csv
-│── model/                 # Modelos e artefatos
-│   ├── modelo.keras
-│   ├── modelo.py
-│   ├── encoders.pkl
-│   └── scaler.pkl
-│── pages/                 # Páginas da aplicação
-│   ├── 1_📊_Analises.py
-│   └── 2_🔮_Previsao.py
-│── utils/                 # Funções auxiliares
-│   └── preprocess.py
-
+```
+📦 sistema-desempenho-escolar/
+├── 📁 data/
+│   └── student_data.csv          # Base de dados dos alunos
+├── 📁 models/
+│   ├── mlp_model.pkl             # Rede neural MLP treinada
+│   ├── scaler.pkl                # Scaler para normalização
+│   └── encoders.pkl              # Encoders para variáveis categóricas
+├── 📁 pages/
+│   ├── 01_dashboard.py           # Dashboard com filtros dinâmicos
+│   ├── 02_analise_exploratoria.py # Gráficos e análises
+│   └── 03_previsao.py            # Módulo de previsão de risco
+├── app.py                        # Ponto de entrada da aplicação
+├── requirements.txt              # Dependências do projeto
+└── README.md
 ```
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Python 3.13**
-- **Streamlit** → Interface web interativa
-- **Plotly** → Gráficos dinâmicos
-- **Pandas / NumPy** → Manipulação e análise de dados
-- **Scikit-learn** → Pré-processamento e métricas
-- **TensorFlow / Keras** → Rede neural MLP
-- **Joblib** → Salvamento e carregamento de modelos
+| Tecnologia | Finalidade |
+|---|---|
+| Python 3.10+ | Linguagem principal |
+| Streamlit | Interface web interativa |
+| Scikit-learn | Rede neural MLP e pré-processamento |
+| Pandas | Manipulação e análise de dados |
+| Plotly / Matplotlib | Visualizações gráficas |
+| Joblib | Serialização dos modelos treinados |
 
 ---
 
-## 📦 Instalação
+## ⚙️ Como Executar
 
-Clone o repositório e instale as dependências:
+### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/habdarkness/sistema_previsao_evasao_escolar.git
-cd SISTEMA_PREVISAO_EVASAO_ESCOLAR
+git clone https://github.com/seu-usuario/sistema-desempenho-escolar.git
+cd sistema-desempenho-escolar
+```
+
+### 2. Crie e ative um ambiente virtual
+
+```bash
+python -m venv venv
+source venv/bin/activate        # Linux/macOS
+venv\Scripts\activate           # Windows
+```
+
+### 3. Instale as dependências
+
+```bash
 pip install -r requirements.txt
 ```
 
----
-
-## ▶️ Executando a Aplicação
-
-Após instalar as dependências, execute:
+### 4. Execute a aplicação
 
 ```bash
 streamlit run app.py
 ```
 
+A aplicação estará disponível em `http://localhost:8501`.
+
 ---
 
-## 📊 Dataset Utilizado
+## 🤖 Modelo de Machine Learning
 
-O projeto utiliza o dataset **Student Alcohol Consumption** (Kaggle), especificamente o arquivo `student-mat.csv`, que contém:
+O modelo de previsão é uma **Rede Neural MLP (Multi-Layer Perceptron)** treinada com dados acadêmicos, sociais e comportamentais dos alunos. As principais variáveis utilizadas incluem:
 
-- Dados acadêmicos (notas, faltas, reprovações)
-- Dados familiares
-- Dados sociais e comportamentais
-- Informações de saúde e hábitos
+- Notas anteriores (G1, G2)
+- Tempo de estudo semanal
+- Número de reprovações anteriores
+- Frequência escolar (faltas)
+- Consumo de álcool (dias de semana e fim de semana)
+- Suporte familiar e escolar
+- Atividades extracurriculares
+
+O pipeline de pré-processamento inclui normalização via `StandardScaler` e codificação de variáveis categóricas com `LabelEncoder`, ambos persistidos para uso em produção.
+
+---
+
+## 📊 Exemplos de Visualizações
+
+- Distribuição de notas finais por turma
+- Correlação entre tempo de estudo e desempenho
+- Impacto do consumo de álcool nas notas
+- Taxa de faltas por nível de risco
+- Mapa de calor de correlações entre variáveis
 
 ---
 
 ## 👥 Equipe
 
-Projeto desenvolvido por estudantes do curso de **Engenharia de Software da UNDB**, sob orientação da disciplina de **Inteligência Artificial**.
+Desenvolvido por alunos do curso de **Engenharia de Software — UNDB** como parte de um projeto de Problem-Based Learning (PBL).
 
 ---
 
-## 📜 Licença
+## 📄 Licença
 
-Este projeto é de uso acadêmico e está sob licença MIT.
-```
+Este projeto está sob a licença [MIT](LICENSE).
